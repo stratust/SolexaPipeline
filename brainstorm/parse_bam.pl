@@ -76,20 +76,38 @@ use Bio::DB::Sam;
 
                          );
 
+
+my @pairs = $sam->get_features_by_location(-type   => 'read_pair',
+#                                            -seq_id => 'chr12',
+#                                            -start  => 500,
+#                                            -end    => 800
+                                        );
+ for my $pair (@pairs) {
+#   print Dumper($pair);
+   #print   $pair->length."\n";   # insert length
+   my ($f,$second_mate) = $pair->get_SeqFeatures;
+   $f->display_name."\t".$f->flags;
+   #print $first_mate->start if $first_mate;
+   #print $second_mate->start."\n" if $second_mate;
+
+ }
+
+=cut
                         my @targets = $sam->seq_ids;
 foreach (@targets){
     print $_."\n";
  my @alignments = $sam->get_features_by_location(
-                                                     -type => 'paired',
-                                                 -seqid => $_,
-                                                 -start  => 1,
-                                                 -end    => 9999999800
+                                                 -seq_id => $_,
+#                                                 -start  => 1,
+#                                                 -end    => 9999999800
  
                      );
 
-
+foreach my $a (@alignments){
+    print $a->query->display_name."\n";
+}
 print Dumper(@alignments);
-
+=cut
 =cut
 for my $a (@alignments) {
     print $a->seq_id;
@@ -109,7 +127,7 @@ for my $a (@alignments) {
     my $paired = $a->get_tag_values('PAIRED');
  }
 =cut
-}
+#}
 
 #print Dumper(@chromosomes);
 

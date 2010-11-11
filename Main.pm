@@ -167,16 +167,50 @@ mkdir $ordered_single_alignment_output unless (-e $ordered_single_alignment_outp
 
 print "Creating BAM Alignment File One...\n";
 system("samtools view -bS -o $ordered_single_alignment_output/single_alignment1.bam $single_alignment_output/single_alignment1.sam");
-print "Sorting BAM Alignment File One...\n\n";
-system("samtools sort -n $ordered_single_alignment_output/single_alignment1.bam $ordered_single_alignment_output/single_alignment1.sorted");
+#print "Sorting BAM Alignment File One...\n\n";
+#system("samtools sort -n $ordered_single_alignment_output/single_alignment1.bam $ordered_single_alignment_output/single_alignment1.sorted");
 
 print "Creating BAM Alignment File Two...\n";
 system("samtools view -bS -o $ordered_single_alignment_output/single_alignment2.bam $single_alignment_output/single_alignment2.sam");
-print "Sorting BAM Alignment File Two...\n\n";
-system("samtools sort -n $ordered_single_alignment_output/single_alignment2.bam $ordered_single_alignment_output/single_alignment2.sorted");
+#print "Sorting BAM Alignment File Two...\n\n";
+#system("samtools sort -n $ordered_single_alignment_output/single_alignment2.bam $ordered_single_alignment_output/single_alignment2.sorted");
+
+#STEP5 Merging single alignment
+print "--------------------------------\n";
+print "STEP5\n";
+print "--------------------------------\n";
+
+my $merged_single_alignment_output = "STEP5-merged_single_alignment"; # Where the merged single alignments will be
+mkdir $merged_single_alignment_output unless (-e $merged_single_alignment_output);
+
+print "Merging single_alignment1.bam and single_alignment2.bam ...\n";
+system("samtools merge -n  $merged_single_alignment_output/merged.bam  $ordered_single_alignment_output/single_alignment1.bam $ordered_single_alignment_output/single_alignment2.bam");
+
+print "Sorting Mate Pairs ...\n";
+system("samtools sort -n $merged_single_alignment_output/merged.bam  $merged_single_alignment_output/merged.sorted");
+
+print "Fixing Mate Pairs ...\n";
+system("samtools fixmate $merged_single_alignment_output/merged.sorted.bam  $merged_single_alignment_output/merged.sorted.fixed.bam");
 
 
-print "Parsing Sorted Alignment Files One and Two...\n\n";
+#STEP6 Translocated pairs
+print "--------------------------------\n";
+print "STEP6\n";
+print "--------------------------------\n";
+
+my $translocated_pairs_output = "STEP6-translocated_pairs"; # Where the tranlocated pairs will be
+mkdir $translocated_pairs_output unless (-e $translocated_pairs_output);
+
+print "Generating Translocated Pairs SAM list ...\n";
+system("samtools view -h $merged_single_alignment_output/merged.sorted.fixed.bam  | processBAM.pl $translocated_pairs_output");
+
+print "Convert Translocated Pairs to BAM list ...\n";
+system("samtools view -bS -o $translocated_pairs_output/translocated_pairs.bam  $translocated_pairs_output/translocated_pairs.sam");
+
+print "Sorting Translocated Pairs to BAM list ...\n";
+system("samtools sort $translocated_pairs_output/translocated_pairs.bam  $translocated_pairs_output/translocated_pairs.sorted");
+
+
 
 
 

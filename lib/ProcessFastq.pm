@@ -205,7 +205,11 @@ sub filter_fastq {
     while ( my $seq1 = $in1->next_seq ) {
         # Get the second file seq;
         my $seq2 = $in2->next_seq;
-        
+       
+        # Making IDs became identical
+        $seq1->display_id($self->strip_id($seq1->display_id));
+        $seq2->display_id($self->strip_id($seq2->display_id));
+
         # Initialize match counter;
         my $c_match = 0;
 
@@ -226,13 +230,13 @@ sub filter_fastq {
             if ($seq2->seq =~ m/^$regex/i){
 
                 #triming the barcode
-                $seq2_truncated = $seq2->trunc($+[0],$seq2->length);
-
+                $seq2_truncated = $seq2->trunc($+[0],$seq2->length);               
+ 
                 $c_match++;
                 last;
             }
         }
-
+        
         if ($c_match == 1){
             if (defined $seq1_truncated){
                 $out1->write_seq($seq1_truncated) ;
@@ -291,6 +295,24 @@ sub filter_fastq {
     print  "Total of duplicated barcode:   $total_duplicated_barcode\n";
     print  "-------------------------------------------------------------\n";
 
+}
+
+
+=head2 strip_id
+
+ Title   : strip_id
+ Usage   : strip_id()
+ Function: 
+ Returns : 
+ Args    : 
+
+=cut 
+
+sub strip_id {
+    my ( $self, $display_id ) = @_;
+    $display_id =~ s/_read_2//g;
+    $display_id =~ s/\/\d$/\//g;
+    return $display_id;
 }
 
 
