@@ -85,8 +85,8 @@ my @pairs = $sam->get_features_by_location(-type   => 'read_pair',
  for my $pair (@pairs) {
 #   print Dumper($pair);
    #print   $pair->length."\n";   # insert length
-   my ($f,$second_mate) = $pair->get_SeqFeatures;
-   $f->display_name."\t".$f->flags;
+   my ($f,$s) = $pair->get_SeqFeatures;
+   print $f->seq_id."\t".$s->seq_id."\n";
    #print $first_mate->start if $first_mate;
    #print $second_mate->start."\n" if $second_mate;
 

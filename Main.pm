@@ -1,4 +1,4 @@
-#!/usr/bin/perl
+#!/data4/stratus/local/bin/perl
 #
 #              INGLÊS/ENGLISH
 #  This program is distributed in the hope that it will be useful,
@@ -67,7 +67,7 @@ use File::Basename;
 
 
 #GetOptions variables
-my ( $barcode, $file1, $file2, $verbose, $reference_genome_path, $np );
+my ( $barcode, $file1, $file2, $verbose, $reference_genome_path, $np, $nobioperl );
 
 Usage("Too few arguments") if $#ARGV<1;
 GetOptions( 
@@ -77,6 +77,7 @@ GetOptions(
     "f2=s" => \$file2,
     "refpath=s" => \$reference_genome_path,
     "np=s" => \$np,
+    "nobioperl" => \$nobioperl,
     "verbose" => \$verbose,
 
     
@@ -92,125 +93,254 @@ $np = 2 unless $np;
 print "--------------------------------\n";
 print "STEP1\n";
 print "--------------------------------\n";
-print "Generating Quality informations of the sequence...\n";
+
 my $sequence_info_output = "sequence_info"; # Where the sequence info will be send
-
-# creating directory if not exist
-mkdir $sequence_info_output unless (-e $sequence_info_output);
-system( "fastx_quality_stats -i $file1 -o $sequence_info_output/" . basename($file1) . ".stats" );
-system( "fastx_quality_stats -i $file2 -o $sequence_info_output/" . basename($file2) . ".stats" );
-
-print "Generating Quality Graph...\n";
-system( "fastq_quality_boxplot_graph.sh -i $sequence_info_output/".basename($file1).".stats -o $sequence_info_output/".basename($file1).".png -t '".basename($file1)."'" );
-system( "fastq_quality_boxplot_graph.sh -i $sequence_info_output/".basename($file2).".stats -o $sequence_info_output/".basename($file2).".png -t '".basename($file2)."'" );
-
-print "Filtering and Spliting Barcode Sequences...\n\n";
-# Creating object ProcessFastq;
 my $barcode_filter_path = "STEP1-barcode_filtered"; # Where the filtered files will be send
-my $self = ProcessFastq->new(file1 => $file1, file2=> $file2, barcode => $barcode, output_path => $barcode_filter_path);
-$self->filter_fastq();
 
-print "Generating Quality informations of the Filtered sequences...\n";
 # creating directory if not exist
-mkdir "$barcode_filter_path/$sequence_info_output" unless (-e "$barcode_filter_path/$sequence_info_output");
-system( "fastx_quality_stats -i $barcode_filter_path/".basename($file1).".barcode_matched -o $barcode_filter_path/$sequence_info_output/" . basename($file1) . ".barcode_matched.stats" );
-system( "fastx_quality_stats -i $barcode_filter_path/".basename($file2).".barcode_matched -o $barcode_filter_path/$sequence_info_output/" . basename($file2) . ".barcode_matched.stats" );
+if ( -e $sequence_info_output ) {
 
-print "Generating Quality Graph...\n";
-system( "fastq_quality_boxplot_graph.sh -i $barcode_filter_path/$sequence_info_output/".basename($file1).".barcode_matched.stats -o $barcode_filter_path/$sequence_info_output/".basename($file1).".png -t '".basename($file1).".barcode_matched'" );
-system( "fastq_quality_boxplot_graph.sh -i $barcode_filter_path/$sequence_info_output/".basename($file2).".barcode_matched.stats -o $barcode_filter_path/$sequence_info_output/".basename($file2).".png -t '".basename($file2).".barcode_matched'" );
+    print "Skipping STEP1...\n";
+}
+else {
 
+    print "Generating Quality informations of the sequence...\n";
 
+    # creating directory if not exist
+    mkdir $sequence_info_output unless ( -e $sequence_info_output );
+
+=cut
+    system( "fastx_quality_stats -i $file1 -o $sequence_info_output/"
+          . basename($file1)
+          . ".stats" );
+    system( "fastx_quality_stats -i $file2 -o $sequence_info_output/"
+          . basename($file2)
+          . ".stats" );
+
+    print "Generating Quality Graph...\n";
+    system( "fastq_quality_boxplot_graph.sh -i $sequence_info_output/"
+          . basename($file1)
+          . ".stats -o $sequence_info_output/"
+          . basename($file1)
+          . ".png -t '"
+          . basename($file1)
+          . "'" );
+    system( "fastq_quality_boxplot_graph.sh -i $sequence_info_output/"
+          . basename($file2)
+          . ".stats -o $sequence_info_output/"
+          . basename($file2)
+          . ".png -t '"
+          . basename($file2)
+          . "'" );
+=cut
+    print "Filtering and Spliting Barcode Sequences...\n\n";
+
+    # Creating object ProcessFastq;
+    my $self = ProcessFastq->new(
+        file1       => $file1,
+        file2       => $file2,
+        barcode     => $barcode,
+        output_path => $barcode_filter_path
+    );
+    $self->filter_fastq() unless $nobioperl;
+    $self->filter_fastq_nobioperl() if $nobioperl;
+
+    print "Generating Quality informations of the Filtered sequences...\n";
+
+    # creating directory if not exist
+    mkdir "$barcode_filter_path/$sequence_info_output"
+      unless ( -e "$barcode_filter_path/$sequence_info_output" );
+=cut      
+    system( "fastx_quality_stats -i $barcode_filter_path/"
+          . basename($file1)
+          . ".barcode_matched -o $barcode_filter_path/$sequence_info_output/"
+          . basename($file1)
+          . ".barcode_matched.stats" );
+    system( "fastx_quality_stats -i $barcode_filter_path/"
+          . basename($file2)
+          . ".barcode_matched -o $barcode_filter_path/$sequence_info_output/"
+          . basename($file2)
+          . ".barcode_matched.stats" );
+
+      print "Generating Quality Graph...\n";
+    system(
+"fastq_quality_boxplot_graph.sh -i $barcode_filter_path/$sequence_info_output/"
+          . basename($file1)
+          . ".barcode_matched.stats -o $barcode_filter_path/$sequence_info_output/"
+          . basename($file1)
+          . ".png -t '"
+          . basename($file1)
+          . ".barcode_matched'" );
+    system(
+"fastq_quality_boxplot_graph.sh -i $barcode_filter_path/$sequence_info_output/"
+          . basename($file2)
+          . ".barcode_matched.stats -o $barcode_filter_path/$sequence_info_output/"
+          . basename($file2)
+          . ".png -t '"
+          . basename($file2)
+          . ".barcode_matched'" );
+=cut
+}
 
 #STEP2 Alignment Paired-end
 print "--------------------------------\n";
 print "STEP2\n";
 print "--------------------------------\n";
+my $paired_alignment_output =  "STEP2-paired_alignment";    # Where the paired alignments will be
 
-print "Align Paired-end Sequences...\n\n";
-my $paired_alignment_output = "STEP2-paired_alignment"; # Where the paired alignments will be
+if ( -e $paired_alignment_output ) {
 
-# creating directory if not exist
-mkdir $paired_alignment_output unless (-e $paired_alignment_output);
+    print "Skipping STEP2...\n\n";
 
-system("time bowtie -S --best --fr -p $np -X 1000 $reference_genome_path -1 $barcode_filter_path/".basename($file1).".barcode_matched -2 $barcode_filter_path/".basename($file2).".barcode_matched --un $paired_alignment_output/unaligned.fq --al $paired_alignment_output/aligned.fq $paired_alignment_output/valid_paired_alignments.sam");
+}
+else {
+    print "Align Paired-end Sequences...\n\n";
 
+    # creating directory if not exist
+    mkdir $paired_alignment_output unless ( -e $paired_alignment_output );
 
+    system(
+"time bowtie -S --best --chunkmbs 256 --fr -p $np -X 1000 $reference_genome_path -1 $barcode_filter_path/"
+          . basename($file1)
+          . ".barcode_matched -2 $barcode_filter_path/"
+          . basename($file2)
+          . ".barcode_matched --un $paired_alignment_output/unaligned.fq --al $paired_alignment_output/aligned.fq $paired_alignment_output/valid_paired_alignments.sam"
+    );
+
+}
 
 #STEP4 Align Unmatched sequences as single-ends
 print "--------------------------------\n";
 print "STEP3\n";
 print "--------------------------------\n\n";
+my $single_alignment_output =
+  "STEP3-single_alignment";    # Where the single alignments will be
 
-my $single_alignment_output = "STEP3-single_alignment"; # Where the single alignments will be
+if ( -e $single_alignment_output ) {
 
-# creating directory if not exist
-mkdir $single_alignment_output unless (-e $single_alignment_output);
+    print "Skipping STEP3...\n\n";
+}
+else {
 
-print "Align Pair One Sequences as single-ends...\n";
-print "--------------------------------------------\n\n";
-system("time bowtie -S --best -p $np $reference_genome_path $paired_alignment_output/unaligned_1.fq  --un $single_alignment_output/single_unalignment1.fq  $single_alignment_output/single_alignment1.sam");
+    # creating directory if not exist
+    mkdir $single_alignment_output unless ( -e $single_alignment_output );
 
-print "Align Pair Two  Sequences as single-ends...\n";
-print "--------------------------------------------\n\n";
-system("time bowtie -S --best -p $np $reference_genome_path $paired_alignment_output/unaligned_2.fq  --un $single_alignment_output/single_unalignment2.fq  $single_alignment_output/single_alignment2.sam");
+    print "Align Pair One Sequences as single-ends...\n";
+    print "--------------------------------------------\n\n";
+    system(
+"time bowtie -S --best --chunkmbs 256 -p $np $reference_genome_path $paired_alignment_output/unaligned_1.fq  --un $single_alignment_output/single_unalignment1.fq  $single_alignment_output/single_alignment1.sam"
+    );
 
+    print "Align Pair Two  Sequences as single-ends...\n";
+    print "--------------------------------------------\n\n";
+    system(
+"time bowtie -S --best --chunkmbs 256 -p $np $reference_genome_path $paired_alignment_output/unaligned_2.fq  --un $single_alignment_output/single_unalignment2.fq  $single_alignment_output/single_alignment2.sam"
+    );
 
+}
 
 #STEP4 Order single alignment
 print "--------------------------------\n";
 print "STEP4\n";
 print "--------------------------------\n";
 
-my $ordered_single_alignment_output = "STEP4-ordered_single_alignment"; # Where the single alignments will be
-mkdir $ordered_single_alignment_output unless (-e $ordered_single_alignment_output);
+my $ordered_single_alignment_output =
+  "STEP4-ordered_single_alignment";    # Where the single alignments will be
 
-print "Creating BAM Alignment File One...\n";
-system("samtools view -bS -o $ordered_single_alignment_output/single_alignment1.bam $single_alignment_output/single_alignment1.sam");
+if ( -e $ordered_single_alignment_output ) {
+
+    print "Skipping STEP4...\n\n";
+}
+else {
+    mkdir $ordered_single_alignment_output
+      unless ( -e $ordered_single_alignment_output );
+
+    print "Creating BAM Alignment File One...\n";
+    system(
+"samtools view -bS -o $ordered_single_alignment_output/single_alignment1.bam $single_alignment_output/single_alignment1.sam"
+    );
+
 #print "Sorting BAM Alignment File One...\n\n";
 #system("samtools sort -n $ordered_single_alignment_output/single_alignment1.bam $ordered_single_alignment_output/single_alignment1.sorted");
 
-print "Creating BAM Alignment File Two...\n";
-system("samtools view -bS -o $ordered_single_alignment_output/single_alignment2.bam $single_alignment_output/single_alignment2.sam");
+    print "Creating BAM Alignment File Two...\n";
+    system(
+"samtools view -bS -o $ordered_single_alignment_output/single_alignment2.bam $single_alignment_output/single_alignment2.sam"
+    );
+
 #print "Sorting BAM Alignment File Two...\n\n";
 #system("samtools sort -n $ordered_single_alignment_output/single_alignment2.bam $ordered_single_alignment_output/single_alignment2.sorted");
+}
+
+
 
 #STEP5 Merging single alignment
 print "--------------------------------\n";
 print "STEP5\n";
 print "--------------------------------\n";
 
-my $merged_single_alignment_output = "STEP5-merged_single_alignment"; # Where the merged single alignments will be
-mkdir $merged_single_alignment_output unless (-e $merged_single_alignment_output);
+my $merged_single_alignment_output =
+  "STEP5-merged_single_alignment";  # Where the merged single alignments will be
 
-print "Merging single_alignment1.bam and single_alignment2.bam ...\n";
-system("samtools merge -n  $merged_single_alignment_output/merged.bam  $ordered_single_alignment_output/single_alignment1.bam $ordered_single_alignment_output/single_alignment2.bam");
+if ( -e $merged_single_alignment_output ) {
 
-print "Sorting Mate Pairs ...\n";
-system("samtools sort -n $merged_single_alignment_output/merged.bam  $merged_single_alignment_output/merged.sorted");
+    print "Skipping STEP5...\n\n";
 
-print "Fixing Mate Pairs ...\n";
-system("samtools fixmate $merged_single_alignment_output/merged.sorted.bam  $merged_single_alignment_output/merged.sorted.fixed.bam");
+}
+else {
+    mkdir $merged_single_alignment_output
+      unless ( -e $merged_single_alignment_output );
 
+    print "Merging single_alignment1.bam and single_alignment2.bam ...\n";
+    system(
+"samtools merge -n  $merged_single_alignment_output/merged.bam  $ordered_single_alignment_output/single_alignment1.bam $ordered_single_alignment_output/single_alignment2.bam"
+    );
+
+    print "Sorting Mate Pairs ...\n";
+    system(
+"samtools sort -n $merged_single_alignment_output/merged.bam  $merged_single_alignment_output/merged.sorted"
+    );
+
+    print "Fixing Mate Pairs ...\n";
+    system(
+"samtools fixmate $merged_single_alignment_output/merged.sorted.bam  $merged_single_alignment_output/merged.sorted.fixed.bam"
+    );
+}
 
 #STEP6 Translocated pairs
 print "--------------------------------\n";
 print "STEP6\n";
 print "--------------------------------\n";
 
-my $translocated_pairs_output = "STEP6-translocated_pairs"; # Where the tranlocated pairs will be
-mkdir $translocated_pairs_output unless (-e $translocated_pairs_output);
+my $translocated_pairs_output =
+  "STEP6-translocated_pairs";    # Where the tranlocated pairs will be
+if ( -e $translocated_pairs_output ) {
 
-print "Generating Translocated Pairs SAM list ...\n";
-system("samtools view -h $merged_single_alignment_output/merged.sorted.fixed.bam  | processBAM.pl $translocated_pairs_output");
+    print "Skipping STEP6...\n\n";
 
-print "Convert Translocated Pairs to BAM list ...\n";
-system("samtools view -bS -o $translocated_pairs_output/translocated_pairs.bam  $translocated_pairs_output/translocated_pairs.sam");
+}
+else {
+    mkdir $translocated_pairs_output unless ( -e $translocated_pairs_output );
 
-print "Sorting Translocated Pairs to BAM list ...\n";
-system("samtools sort $translocated_pairs_output/translocated_pairs.bam  $translocated_pairs_output/translocated_pairs.sorted");
+    print "Generating Translocated Pairs SAM list ...\n";
+    system(
+"samtools view -h $merged_single_alignment_output/merged.sorted.fixed.bam  | processBAM.pl $translocated_pairs_output $reference_genome_path"
+    );
 
+    print "Convert Translocated Pairs to BAM list ...\n";
+    system(
+"samtools view -bS -o $translocated_pairs_output/translocated_pairs.bam  $translocated_pairs_output/translocated_pairs.sam"
+    );
 
+    print "Sorting Translocated Pairs to BAM list ...\n";
+    system(
+"samtools sort $translocated_pairs_output/translocated_pairs.bam  $translocated_pairs_output/translocated_pairs.sorted"
+    );
+}
+
+print "--------------------------------\n";
+print "             DONE!!!!!!!!\n";
+print "--------------------------------\n";
 
 
 
