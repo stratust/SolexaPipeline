@@ -211,6 +211,7 @@ sub find_primer_region {
         $primerF_start = 61818182;
         $primerR_end   = 61818392;
         $insert_size   = 114;
+        $insert_size   = 0;
         $primerR_end   = $primerR_end + $insert_size;
 
     }
@@ -222,6 +223,7 @@ sub find_primer_region {
         $primerF_start = 114664845;
         $primerR_end   = 114665029;
         $insert_size   = 137;
+        $insert_size   = 0;
         $primerR_end   = $primerR_end + $insert_size;
         $igh           = 1;
     }
@@ -294,6 +296,7 @@ sub find_mate_primer {
         $primerF_start = 61818182;
         $primerR_end   = 61818392;
         $insert_size   = 114;
+        $insert_size   = 0;
         $primerR_end   = $primerR_end + $insert_size;
 
     }
@@ -305,6 +308,7 @@ sub find_mate_primer {
         $primerF_start = 114664845;
         $primerR_end   = 114665029;
         $insert_size   = 137;
+        $insert_size   = 0;
         $primerR_end   = $primerR_end + $insert_size;
         $igh           = 1;
     }

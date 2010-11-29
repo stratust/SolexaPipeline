@@ -1,4 +1,4 @@
-#!/usr/bin/perl
+#!/data4/stratus/local/bin/perl
 #
 #              INGLÊS/ENGLISH
 #  This program is distributed in the hope that it will be useful,
@@ -187,7 +187,8 @@ sub find_primer_region {
         $chr           = "chr15";
         $primerF_start = 61818182;
         $primerR_end   = 61818392;
-        $insert_size   = 114;
+#        $insert_size   = 114;
+        $insert_size   = 0;
         $primerR_end   = $primerR_end + $insert_size;
 
     }
@@ -198,7 +199,8 @@ sub find_primer_region {
         $chr           = "chr12";
         $primerF_start = 114664845;
         $primerR_end   = 114665029;
-        $insert_size   = 137;
+#        $insert_size   = 137;
+        $insert_size   = 0;
         $primerR_end   = $primerR_end + $insert_size;
         $igh =1;
     }

@@ -60,12 +60,15 @@ use warnings;
 
 my $dir_name = shift;
 my $ref_path_name =shift;
+my $have_insert =shift;
 
 my $print_next = 0;
 my $invalid   = 0;
 
 open(my $sam,'>',$dir_name.'/translocated_pairs.sam');
+
 open(my $sam_invalid,'>',$dir_name.'/invalid_pairs.sam');
+
 open(my $out,'>',$dir_name.'/info.txt');
 
 my $total_pairs;
@@ -120,6 +123,7 @@ while ( my $line = <STDIN> ) {
             $primerF_start = 61818182;
             $primerR_end = 61818392;
             $insert_size   = 114;
+            $insert_size   = 0  unless $have_insert;
             $primerR_end = $primerR_end + $insert_size;
 
 
@@ -131,6 +135,7 @@ while ( my $line = <STDIN> ) {
             $primerF_start = 114664845;
             $primerR_end = 114665029;
             $insert_size   = 137;
+            $insert_size   = 0  unless $have_insert;
             $primerR_end = $primerR_end + $insert_size;
         }
 

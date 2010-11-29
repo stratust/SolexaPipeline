@@ -67,7 +67,7 @@ use File::Basename;
 
 
 #GetOptions variables
-my ( $barcode, $file1, $file2, $verbose, $reference_genome_path, $np, $nobioperl );
+my ( $barcode, $file1, $file2, $verbose, $reference_genome_path, $np, $nobioperl, $have_insert );
 
 Usage("Too few arguments") if $#ARGV<1;
 GetOptions( 
@@ -79,6 +79,7 @@ GetOptions(
     "np=s" => \$np,
     "nobioperl" => \$nobioperl,
     "verbose" => \$verbose,
+    "have_insert" => \$have_insert,
 
     
 )or Usage();
@@ -86,6 +87,7 @@ GetOptions(
 # Presetting;
 $barcode = 'CGCGCCT' unless $barcode;
 $np = 2 unless $np;
+$have_insert = 0 unless $have_insert;
 
 
 # STEP1
@@ -324,7 +326,7 @@ else {
 
     print "Generating Translocated Pairs SAM list ...\n";
     system(
-"samtools view -h $merged_single_alignment_output/merged.sorted.fixed.bam  | processBAM.pl $translocated_pairs_output $reference_genome_path"
+"samtools view -h $merged_single_alignment_output/merged.sorted.fixed.bam  | processBAM.pl $translocated_pairs_output $reference_genome_path $have_insert"
     );
 
     print "Convert Translocated Pairs to BAM list ...\n";

@@ -62,152 +62,187 @@ use Moose;
 use List::Compare;
 use List::Util qw(first max maxstr min minstr reduce shuffle sum);
 use Data::Dumper;
-
+use Data::Merger qw(merger);
 # My window size
 
-my $w_size = 10000;
+my $w_size = 2000;
 
 
 #STEP7 Clustering Translocated pairs
 print "--------------------------------\n";
 print "STEP9\n";
 print "--------------------------------\n";
-my $slide_window =
-  "STEP9-slide_window";    # Where the tranlocated pairs will be
+my $slide_window = "STEP9-slide_window";   # Where the tranlocated pairs will be
 if ( -e $slide_window ) {
 
     print "Skipping STEP9...\n\n";
 
 }
 else {
-    print "Sliding Window...\n\n";
-    mkdir $slide_window;
-    my @files = 
-    open( my $in, '<', 'STEP8-Defining_regions/chr12.txt.sorted' ) or die "cannot open file";
-
-    # Number of reads
-#    my @reads = <$in>;
-    my @reads;
-    my @AoA_windows;
-    say "Creting Windows";
-    for ( my $i=0; $i <= $#reads; $i++  ){
-        for ( my $y = $i; $y < $#reads; $y++){
-            chomp $reads[$y];
-            my ($chr,$id,$pos) = split ('\t',$reads[$y]);
-            unless ($AoA_windows[$i][0]){
-                  push(@{$AoA_windows[$i]}, $pos );
-             }
-             else{
-                  push(@{$AoA_windows[$i]}, $pos ) if ($pos <= $AoA_windows[$i][0] + $w_size);
-             }
-
-        }
-    }
     
-    my $first_pos = 0;
-    my %frame;
-    while (my $line = <$in>){
-           chomp $line;
-            my ($chr,$id,$pos) = split ('\t',$line);
-            if ($first_pos){
-                if ($pos <= $first_pos + $w_size){
-                    push(@{$frame{$first_pos}},$pos);
+
+    say "Sliding Window...\n";
+    mkdir $slide_window;
+    my @chrs = (
+        qw/
+          chr1
+          chr2
+          chr3
+          chr4
+          chr5
+          chr6
+          chr7
+          chr8
+          chr9
+          chr10
+          chr11
+          chr12
+          chr13
+          chr14
+          chr15
+          chr16
+          chr17
+          chr18
+          chr19
+          chrM
+          chrX
+          chrY
+          /
+    );
+
+    open( my $out, ">", "$slide_window/hotspots.txt" );
+    my $y;
+    foreach my $chrm (@chrs) {
+        next unless ('STEP8-Defining_regions/' . $chrm . '.txt.sorted');
+        open( my $in, '<', 'STEP8-Defining_regions/' . $chrm . '.txt.sorted' )
+          or die "cannot open file";
+
+        # Number of reads
+
+        my $first_pos = 0;
+        my %frame;
+        while ( my $line = <$in> ) {
+            chomp $line;
+            my ( $chr, $id, $pos ) = split( '\t', $line );
+            my %h = (
+                'chr' => $chr,
+                'id'  => $id,
+                'pos' => $pos,
+            );
+            if ($first_pos) {
+                if ( $pos <= $first_pos + $w_size ) {
+                    push( @{ $frame{$first_pos} }, \%h );
                 }
-                else{
+                else {
+                    push( @{ $frame{$pos} }, \%h );
                     $first_pos = $pos;
-                    push(@{$frame{$first_pos}},$first_pos);
-                    
                 }
             }
-            else{
+            else {
                 $first_pos = $pos;
-                push(@{$frame{$first_pos}},$first_pos);
+                push( @{ $frame{$first_pos} }, \%h );
                 next;
             }
+
+        }
+        close($in);
+
+        foreach ( sort { $a <=> $b } keys %frame ) {
+
+            for ( my $i = 0 ; $i < $#{ $frame{$_} } ; $i++ ) {
+                say "Lower value before found "
+                  . $frame{$_}->[ ( $i + 1 ) ]->{pos} . "<"
+                  . $frame{$_}->[$i]->{pos}
+                  if ( $frame{$_}->[ ( $i + 1 ) ]->{pos} <
+                    $frame{$_}->[$i]->{pos} );
+            }
+
+            #say $_ ." (".$frame{$_}->[0]->{pos}.") ". " => " . $#{$frame{$_}} ;
+        }
+
+        #        exit;
+
+        say "Merging windows with less than window size";
+        my @final;
+
+        foreach my $key ( sort { $a <=> $b } keys %frame ) {
             
-   
-    }
-    close($in);
-   
-#    print Dumper(%frame);
+            unless ( defined $final[0] ) {
+                push( @final, $frame{$key} );
+                next;
+            }
 
-#   exit;
-    my @aux;
-    say "Removing window contained in other windows";
-    foreach my $key (sort {$a <=> $b} keys %frame ){
-        unless ($aux[0]){
-            push(@aux,$frame{$key});
-            next;
+                #say $frame{$key}->[0]->{pos} . '<' . ($final[$#final][$#{$final[$#final]}]->{pos} + $w_size ) ;
+                if ( $frame{$key}->[0]->{pos} <
+                    ( $final[$#final][$#{$final[$#final]}]->{pos} + $w_size ) )
+                {
+
+                    my @new = (@{$final[$#final]},@{$frame{$key}});
+
+                    my @sorted =  sort { $a->{pos} <=> $b->{pos} } @new;
+                    $final[$#final] = \@sorted;
+                    
+                    #say "----final-------";
+                    #print Dumper($final[$#final]);
+                    #say "-------frame----------";
+                    #print Dumper($frame{$key});
+                    #say "--------Merger---------";
+                    #print Dumper($merged_data);
+                for (my $i=0; $i < $#{$final[$#final]}; $i++){
+                say "Lower value before found "
+                  . $final[$#final]->[ ( $i + 1 ) ]->{pos} . "<"
+                  . $final[$#final]->[$i]->{pos}
+                  if ( $final[$#final]->[ ( $i + 1 ) ]->{pos} < $final[$#final]->[$i]->{pos} );
+            }
+ 
+                    
+                }
+                else {
+
+            push( @final, $frame{$key} );
+
+                            }
         }
-        my $lc = List::Compare->new('--unsorted', $aux[$#aux], $frame{$key});
-        if ( $lc->is_RsubsetL ){
-            next;
-        }
-        else{
-            push(@aux,$frame{$key});
-        }
-        
-    }
+
     
-   
-    say "Merging windows with less than window size";
-    my @final;
-#    print Dumper(@aux);
-#    exit;
-    if (&is_groups(@aux)){
+        #print Dumper(%hash);
 
-    foreach my $window (@aux){
-        unless (defined $final[0]){
-            push(@final,$window);
-            next;
-        }
-        if ($window->[0] < ($final[$#final][$#{$final[$#final]}] + $w_size)){
-            my $lc = List::Compare->new('--unsorted',$final[$#final],$window);
-            my @a = $lc->get_union;
-            $final[$#final] = \@a;
-        }
-        else{
-            push(@final,$window);
-        }
+        # Print in any order
+            foreach my $window ( @final ) {
+
+                my @positions_cluster;
+                my $nR = 0;
+                my $nF = 0;
+                foreach ( @{$window} ) {
+                    $y++;
+                    push( @positions_cluster, $_->{pos} );
+                    if ( $_->{id} =~ m/R$/ ) {
+                        $nR++;
+                    }
+                    else {
+                        $nF++;
+                    }
+                }
+
+                if (   ( $nR / ( $#{$window} + 1 ) ) >= 0.25
+                    && ( $nR / ( $#{$window} + 1 ) ) <= 0.75
+                    && $#{$window} >= 0 )
+                {
+
+                    say $out $chrm . "\t"
+                      . min(@positions_cluster) . '-'
+                      . max(@positions_cluster) . "\t"
+                      . ( $#{$window} + 1 ) . "\t"
+                      . $nF . "\t"
+                      . $nR;
+
+                }
+
+            }
     }
-
-    }
-    else{
-        @final = @aux;
-    
-    }
-    
-    
-    # Discovering the amount of reads in each window
-    my %hash;
-    say "Counting amout of reads in each window";
-    foreach my $window (@final){
-        my $key = @{$window};
-        push(@{$hash{$key}}, $window);
-    }
-
-    #print Dumper(%hash);
-
-    # Print in descendent order
-    foreach my $k ( sort {$b <=> $a} keys %hash){
-        last if $k < 3;
-        foreach my $window (@{$hash{$k}}){
-
-            say min(@{$window}).' - ' . max(@{$window}) ."\t". $k; 
-
-        }
-    }
-
+    say $y;
+    close($out);
 }
 
-sub is_groups(){
-    my (@aux) = @_;
-    
-    my $is_group = 0;
-    foreach (@aux){
-       my $scalar = @{$_}; 
-       $is_group++ if $scalar > 1;
-    }
 
-    return $is_group;
-}
+

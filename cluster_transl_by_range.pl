@@ -81,22 +81,33 @@ if ( -e $translocated_pairs_cluster_output ) {
 else {
 
     print "Clustering translocations and rearrangements...\n\n";
+
     mkdir $translocated_pairs_cluster_output;
+    
     open( my $in, '<', 'STEP6-translocated_pairs/translocated_pairs.sam' );
+    
     open(
         my $out,
         '>',
         $translocated_pairs_cluster_output . "/cluster_translocated_pairs.sam"
     );
+    
     open( my $info, '>', $translocated_pairs_cluster_output . "/info.txt" );
 
     my %unique;
+    
     my $number_of_pairs;
+    my $number_of_pairs_without_primers;
+    
     while ( my $pair_1 = <$in> ) {
+    
         if ( $pair_1 =~ /^\@/ ) {
+        
             print $out $pair_1;
             next;
+
         }
+
         $number_of_pairs++;
 
         my $pair_2 = <$in>;
@@ -107,16 +118,23 @@ else {
         my ( $id2, $flag2, $chr_2, $pos_read2, $maq2, $cirgar2, $chr_mate2,
             $pos_mate2 )
           = split( "\t", $pair_2 );
-        
+
         # Find primer (F or R) and mate who have the primer (1 or 2);
         my $mate_primer = find_mate_primer($pair_1, $primer_used);
         
         my $key;
+        # If the primer is on  first mate
         if ($mate_primer =~ m/1/){
             $key = "$flag1|$flag2|$chr_2|$pos_read2";
         }
-        else{
+
+        # If the primer is on  second  mate
+        elsif ( $mate_primer =~ m/2/){
             $key = "$flag2|$flag1|$chr_1|$pos_read1";
+        }
+        # Or no primer found
+        else{
+            next;        
         }
 
         if ( defined $unique{$key} ) {
@@ -197,7 +215,8 @@ sub find_primer_region {
         $chr           = "chr15";
         $primerF_start = 61818182;
         $primerR_end   = 61818392;
-        $insert_size   = 114;
+#        $insert_size   = 114;
+        $insert_size   = 0;
         $primerR_end   = $primerR_end + $insert_size;
 
     }
@@ -208,7 +227,8 @@ sub find_primer_region {
         $chr           = "chr12";
         $primerF_start = 114664845;
         $primerR_end   = 114665029;
-        $insert_size   = 137;
+#        $insert_size   = 137;
+        $insert_size   = 0;
         $primerR_end   = $primerR_end + $insert_size;
         $igh           = 1;
     }
@@ -280,7 +300,8 @@ sub find_mate_primer {
         $chr           = "chr15";
         $primerF_start = 61818182;
         $primerR_end   = 61818392;
-        $insert_size   = 114;
+#        $insert_size   = 114;
+        $insert_size   = 0;
         $primerR_end   = $primerR_end + $insert_size;
 
     }
@@ -291,7 +312,8 @@ sub find_mate_primer {
         $chr           = "chr12";
         $primerF_start = 114664845;
         $primerR_end   = 114665029;
-        $insert_size   = 137;
+#        $insert_size   = 137;
+        $insert_size   = 0;
         $primerR_end   = $primerR_end + $insert_size;
         $igh           = 1;
     }
