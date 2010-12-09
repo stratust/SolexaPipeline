@@ -113,9 +113,9 @@ else {
     open( my $out, ">", "$slide_window/hotspots.txt" );
     my $y;
     foreach my $chrm (@chrs) {
-        next unless ('STEP8-Defining_regions/' . $chrm . '.txt.sorted');
+        next unless (-e 'STEP8-Defining_regions/' . $chrm . '.txt.sorted');
         open( my $in, '<', 'STEP8-Defining_regions/' . $chrm . '.txt.sorted' )
-          or die "cannot open file";
+          or die "cannot open file $chrm.txt.sorted";
 
         # Number of reads
 
@@ -162,7 +162,7 @@ else {
 
         #        exit;
 
-        say "Merging windows with less than window size";
+        say "$chrm : Merging windows with less than window size";
         my @final;
 
         foreach my $key ( sort { $a <=> $b } keys %frame ) {
@@ -224,15 +224,16 @@ else {
                     }
                 }
 
-                if (   ( $nR / ( $#{$window} + 1 ) ) >= 0.25
-                    && ( $nR / ( $#{$window} + 1 ) ) <= 0.75
-                    && $#{$window} >= 0 )
-                {
-
+#                if (   ( $nR / ( $#{$window} + 1 ) ) >= 0.25
+#                    && ( $nR / ( $#{$window} + 1 ) ) <= 0.75
+#                    && $#{$window} >= 0 )
+#                {
+                 if ($#{$window} > 0){
                     say $out $chrm . "\t"
                       . min(@positions_cluster) . '-'
                       . max(@positions_cluster) . "\t"
                       . ( $#{$window} + 1 ) . "\t"
+                      . ($nR/ ($#{$window} + 1 ) ) . "\t"
                       . $nF . "\t"
                       . $nR;
 

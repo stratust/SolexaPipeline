@@ -26,7 +26,7 @@
 #  CEP 14051-140
 #  Fone: 55 16 2101-9300 Ramal 9365
 #
-#  Thiago Yukio Kikuchi Oliveira
+#  Thiago Yukio Kikuchi Oliveira 
 #  stratus@lgmb.fmrp.usp.br
 #  http://lgmb.fmrp.usp.br
 #
@@ -55,31 +55,85 @@ http://www.gnu.org/copyleft/gpl.html
 
 =cut
 
+
 use strict;
 use warnings;
-use Data::Dumper;
-use 5.10.0;
+use Getopt::Long;
 
-my $bed_file = shift;
+Usage("Too few arguments") if $#ARGV<0;
 
+my ($myc_f, $igh_f, $merged_f);
 
-my %same;
-open(my $in,"<", $bed_file);
+GetOptions(
+    "h|?|help"=> sub { Usage(); },
+    "myc=s" => \$myc_f,
+    "igh=s" => \$igh_f,
+    "merged=s" => \$merged_f,
 
-while (<$in>){
+) or Usage();
+	   
+
+open(my $in,"<",$merged_f);
+
+my %merged;
+foreach (<$in>){
     chomp;
-    my ($chr,$start,$end, $event,$r_ratio,$f,$r,$gene) = split "\t",$_;    
-    $gene = '*' unless ($gene);
-    push (@{$same{"$chr,$start,$end,$event,$r_ratio,$f,$r"}}, $gene);
+    my @f = split "\t",$_;
+    my $id = $f[$#f];
+    $id =~ s/a//g;
+    $merged{$id}->{name} = $f[($#f - 1)];
+    $merged{$id}->{igh} = 0;
+    $merged{$id}->{myc} = 0;
 }
 
 close($in);
 
-foreach my $key (keys %same){
-    my @aux = split(',', $key);
-    print join("\t",@aux);   
-    my $genes = join(", ",@{$same{$key}});
-    $genes =~ s/, \*//g;
-#    $genes =~ s/\*//g;
-    print "\t" .$genes."\n";
+open($in,"<",$igh_f);
+
+foreach (<$in>){
+    chomp;
+    my @f = split "\t",$_;
+    my $id = $f[$#f];
+    $id =~ s/a//g;
+    $merged{$id}->{igh} += $f[3];
 }
+
+close($in);
+
+open($in,"<",$myc_f);
+
+foreach (<$in>){
+    chomp;
+    my @f = split "\t",$_;
+    my $id = $f[$#f];
+    $id =~ s/a//g;
+    $merged{$id}->{myc} += $f[3];
+}
+
+close($in);
+
+
+print "ID\tLocation\tIgh\tmyc\n";
+foreach my $key (sort {$a <=> $b} keys %merged){
+    print "a$key\t$merged{$key}{name}\t$merged{$key}->{igh}\t$merged{$key}->{myc}\n";
+}
+
+
+###############
+# Subroutines #
+###############
+sub Usage {
+	my($msg) = @_;
+print STDERR "\nERR: $msg\n\n" if $msg;
+print STDERR qq[$0  ].q[$Revision$].qq[\n];
+print STDERR<<EOU;
+Thiago Yukio Kikuchi Oliveira (stratus\@lgmb.fmrp.usp.br) 
+(c)2008 Regional Blood Center of Ribeirao Preto
+
+Usage 
+
+EOU
+exit(1);
+}
+
+
